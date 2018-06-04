@@ -1,7 +1,7 @@
 import praw
 
 reddit = praw.Reddit('bot1')
-subreddit = reddit.subreddit('danielkawalsky')
+subreddit = reddit.subreddit('askreddit')
 
 # for submission in subreddit.hot(limit=5):
 	# print(submission.stream)
@@ -27,7 +27,8 @@ for comment in subreddit.comments():
 	print(comment.link_url) # unnecessary because the url is: 
 		# https://www.reddit.com/r/danielkawalsky/comments/8of5u8	   /garbage_post/ 
 							  #(/r/<subreddit>   /comments/<comment_id>/<submission_title>/)
-	break
+	print(comment.link_permalink)
+	# break
 
 # for submission in reddit.subreddit('danielkawalsky').hot(limit=3):
 # 	for comment in submission.comments._comments:

@@ -22,10 +22,10 @@ def setup_logger(logName, level=logging.INFO):
 
 	return logger
 
-def log_comment(comment_id):
+def log_comment(comment_url, comment_id):
 	# comment logger
 	comment_logger = setup_logger(comments_log_filename)
-	comment_logger.info('[{0}]\t* {1} *'.format('COMMENT', comment_id))
+	comment_logger.info('[{0}]\t{1}\t* {2} *'.format('COMMENT', comment_url, comment_id))
 	return
 
 def log_submission(submission_id):
