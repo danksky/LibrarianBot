@@ -1,64 +1,23 @@
 import praw
-import pdb
-import re
-import os
 import schedule
 import time
 from random import randint
 
 import librarian_logger
 
-comments_replied_to = []
+comments_replied_to 	= []
 submission_commented_in = []
 reddit = praw.Reddit('bot1')
 
 def initiate_librarian():
-	print(str(time.ctime()) + " running...")
-	comments_log_file = librarian_logger.logPath + "/" + librarian_logger.comments_log_filename + ".log"
-	submissions_log_file = librarian_logger.logPath + "/" + librarian_logger.submissions_log_filename + ".log"
-	# Populate comments log list
-	if os.path.isfile(comments_log_file):
-		with open(comments_log_file, "r") as f:
-			lines = f.read().split("\n")
-			# Clean
-			while('' in lines):
-				lines.remove('')
-			# Iterate through id's
-			line_num = -1
-			for line in lines:
-				line_num += 1
-				comment_id = line[-9:-2]
-				if ((len(comment_id) > 7) or (re.match('^[0-9A-Za-z]+$', comment_id) is None)):
-					# Something is up with the read
-					if (len(comment_id) == 0):
-						librarian_logger.log_error("Comment id is being grabbed from empty line") # Meaning cleaning above didn't work
-					else:
-						librarian_logger.log_error("Bad formatting on " + comments_log_file + " line " + str(line_num) + ":\n\t" + line)
-				else:
-					comments_replied_to.append(comment_id) 
-	# Populate submissions log list
-	if os.path.isfile(submissions_log_file):
-		with open(submissions_log_file, "r") as f:
-			lines = f.read().split("\n")
-			# Clean
-			while('' in lines):
-				lines.remove('')
-			# Iterate through id's
-			line_num = -1
-			for line in lines:
-				line_num += 1
-				submission_id = str(line[-8:-2])
-				if ((len(submission_id) > 6) or (re.match('^[0-9A-Za-z]+$', submission_id) is None)):
-					# Something is up with the read
-					if (len(submission_id) == 0):
-						librarian_logger.log_error("Comment id is being grabbed from empty line") # Meaning cleaning above didn't work
-					else:
-						librarian_logger.log_error("Bad formatting on " + submissions_log_file + " line " + str(line_num) + ":\n\t" + line)
-				else:
-					submission_commented_in.append(submission_id) 
-	traverse_subreddits()
+	print(str(time.ctime()) + " Initiating librarian...")
+	librarian_logger.set_logger_printtoconsole(True)
+	comments_replied_to 	= librarian_logger.populate_log_list(librarian_logger.COMMENT_TYPE)
+	submission_commented_in = librarian_logger.populate_log_list(librarian_logger.SUBMISSION_TYPE)
+	# traverse_subreddits()
 
 def traverse_subreddits():
+	print(str(time.ctime()) + " running...")
 	reply_count, reply_limit = 0, 5
 	subreddits = [
 		'showerthoughts', 
@@ -114,6 +73,10 @@ def quiet_a_redditor(subreddit_title):
 					try:
 						# Magic
 						comment.reply(shushes[randint(0, len(shushes)-1)] + " This is a public forum.")
+						# Local/Runtime record
+						comments_replied_to.append(comment_id)
+						submission_commented_in.append(comment.submission)
+						# Permanent record
 						librarian_logger.log_comment(comment.link_permalink, comment_id)
 						librarian_logger.log_submission(comment.submission)
 						return True # For now, success means you're done in the subreddit
@@ -135,8 +98,8 @@ def schedule_librarian(job):
 	schedule.every().day.at("5:30").do(job)
 
 if __name__ == "__main__":
-	 # initiate_librarian()
-	schedule_librarian(initiate_librarian)
+	initiate_librarian()
+	schedule_librarian(traverse_subreddits)
 	while True:
 		schedule.run_pending()
 		time.sleep(1)
