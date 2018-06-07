@@ -95,8 +95,9 @@ def merits_a_shush(text): # Logic of Librarian
 	return (text.isupper()) and (len(text) > 6)
 
 def schedule_librarian(job):
-	schedule.every().day.at("10:30").do(job)
-	schedule.every().day.at("5:30").do(job)
+	schedule.every().day.at("09:30").do(job)
+	schedule.every().day.at("17:30").do(job)
+	schedule.every().day.at("23:30").do(job)
 
 if __name__ == "__main__":
 	initiate_librarian()
