@@ -16,7 +16,7 @@ def initiate_librarian():
 	comments_replied_to 		= librarian_logger.populate_log_list(librarian_logger.COMMENT_TYPE)
 	comments_replied_to_roots	= populate_roots(comments_replied_to)
 	submission_commented_in 	= librarian_logger.populate_log_list(librarian_logger.SUBMISSION_TYPE)
-	traverse_subreddits()
+	# traverse_subreddits()
 
 def traverse_subreddits():
 	print(str(time.ctime()) + " running...")
