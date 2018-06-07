@@ -31,8 +31,7 @@ def traverse_subreddits():
 		'space', 
 		'theydidthefuckyou',
 		'unexpected',
-		'todayilearned',
-		'hmmm']
+		'todayilearned',] # banned from r/hmmm lol
 	while(len(subreddits) > 0 and reply_count <= reply_limit):
 		random_index = randint(0, len(subreddits)-1)
 		subreddit_title = subreddits[random_index]
@@ -83,6 +82,8 @@ def quiet_a_redditor(subreddit_title):
 					except praw.exceptions.APIException as err:
 						librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
 						break
+					except prawcore.exceptions.Forbidden as err:
+						librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
 			else:
 				print("Reached " + str(query_limit) + " queried comments on subreddit " + subreddit_title + ".")
 				break
