@@ -18,4 +18,14 @@ for comment in subreddit.comments():
 	print(comment.submission) # get the submission of the post
 	print(comment.link_url)
 	print(comment.link_permalink)
-	# break
+	break
+
+comment = reddit.comment('e039ste')
+ancestor = comment
+refresh_counter = 0
+while not ancestor.is_root:
+    ancestor = ancestor.parent()
+    if refresh_counter % 9 == 0:
+        ancestor.refresh()
+    refresh_counter += 1
+print('Top-most Ancestor: {}'.format(ancestor))

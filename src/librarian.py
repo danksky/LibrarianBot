@@ -5,16 +5,18 @@ from random import randint
 
 import librarian_logger
 
-comments_replied_to 	= []
-submission_commented_in = []
+comments_replied_to 		= []
+comments_replied_to_roots	= []
+submission_commented_in		= []
 reddit = praw.Reddit('bot1')
 
 def initiate_librarian():
 	print(str(time.ctime()) + " Initiating librarian...")
 	librarian_logger.set_logger_printtoconsole(True)
-	comments_replied_to 	= librarian_logger.populate_log_list(librarian_logger.COMMENT_TYPE)
-	submission_commented_in = librarian_logger.populate_log_list(librarian_logger.SUBMISSION_TYPE)
-	# traverse_subreddits()
+	comments_replied_to 		= librarian_logger.populate_log_list(librarian_logger.COMMENT_TYPE)
+	comments_replied_to_roots	= populate_roots(comments_replied_to)
+	submission_commented_in 	= librarian_logger.populate_log_list(librarian_logger.SUBMISSION_TYPE)
+	traverse_subreddits()
 
 def traverse_subreddits():
 	print(str(time.ctime()) + " running...")
@@ -68,22 +70,27 @@ def quiet_a_redditor(subreddit_title):
 			if query_count <= query_limit:
 				if query_count > query_limit/2:
 					print("Reached " + str(query_limit/2) + " queried comments.")
-				if merits_a_shush(comment.body): 
-					try:
-						# Magic
-						comment.reply(shushes[randint(0, len(shushes)-1)] + " This is a public forum.")
-						# Local/Runtime record
-						comments_replied_to.append(comment_id)
-						submission_commented_in.append(comment.submission)
-						# Permanent record
-						librarian_logger.log_comment(comment.link_permalink, comment_id)
-						librarian_logger.log_submission(comment.submission)
-						return True # For now, success means you're done in the subreddit
-					except praw.exceptions.APIException as err:
-						librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
-						break
-					except prawcore.exceptions.Forbidden as err:
-						librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
+				if merits_a_shush(comment.body):
+					root_id = get_root_comment(comment_id)
+					if distinct_tree(root_id):
+						try:
+							# Magic
+							comment.reply(shushes[randint(0, len(shushes)-1)] + " This is a public forum.")
+							# Local/Runtime record
+							comments_replied_to.append(comment_id)
+							comments_replied_to_roots.append(root_id)
+							submission_commented_in.append(comment.submission)
+							# Permanent record
+							librarian_logger.log_comment(comment.link_permalink, comment_id)
+							librarian_logger.log_submission(comment.submission)
+							return True # For now, success means you're done in the subreddit
+						except praw.exceptions.APIException as err:
+							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
+							break
+						except prawcore.exceptions.Forbidden as err:
+							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
+					else:
+						print("Found " + comment_id + " to shush, but I've already shushed their tree!")
 			else:
 				print("Reached " + str(query_limit) + " queried comments on subreddit " + subreddit_title + ".")
 				break
@@ -91,8 +98,27 @@ def quiet_a_redditor(subreddit_title):
 			print(comment_id + ": '" + comment.body[:10] + "' has already been shushed!")
 	return False
 
+def distinct_tree(attempt_root_id):
+	return (attempt_root_id not in comments_replied_to_roots)
+
+def get_root_comment(comment_id):
+	comment = reddit.comment(comment_id)
+	ancestor = comment
+	refresh_counter = 0
+	while not ancestor.is_root:
+	    ancestor = ancestor.parent()
+	    if refresh_counter % 9 == 0:
+	        ancestor.refresh()
+	    refresh_counter += 1
+	return str(ancestor)
+
+def populate_roots(comments_replied_to):
+	for comment_id in comments_replied_to:
+		comments_replied_to_roots.append(get_root_comment(comment_id))
+
 def merits_a_shush(text): # Logic of Librarian
 	return (text.isupper()) and (len(text) > 6)
+	# return (len(text) > 10 and text.count('s') > 4) # dummy test
 
 def schedule_librarian(job):
 	schedule.every().day.at("09:30").do(job)
@@ -105,5 +131,3 @@ if __name__ == "__main__":
 	while True:
 		schedule.run_pending()
 		time.sleep(1)
-
-    
