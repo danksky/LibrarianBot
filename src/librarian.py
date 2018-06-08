@@ -89,6 +89,10 @@ def quiet_a_redditor(subreddit_title):
 							break
 						except prawcore.exceptions.Forbidden as err:
 							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
+						except prawcore.exceptions.InvalidToken as err:
+							reddit 		= praw.Reddit('bot1')
+							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
+
 					else:
 						print("Found " + comment_id + " to shush, but I've already shushed their tree!")
 			else:
