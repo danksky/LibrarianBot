@@ -8,10 +8,12 @@ import librarian_logger
 comments_replied_to 		= []
 comments_replied_to_roots	= []
 submission_commented_in		= []
-reddit = praw.Reddit('bot1')
+reddit = None 
 
 def initiate_librarian():
 	print(str(time.ctime()) + " Initiating librarian...")
+	global reddit
+	reddit = praw.Reddit('bot1')
 	librarian_logger.set_logger_printtoconsole(True)
 	comments_replied_to 		= librarian_logger.populate_log_list(librarian_logger.COMMENT_TYPE)
 	comments_replied_to_roots	= populate_roots(comments_replied_to)
@@ -43,6 +45,7 @@ def traverse_subreddits():
 		subreddits.remove(subreddit_title)
 
 def quiet_a_redditor(subreddit_title):
+	global reddit
 	query_count, query_limit = 0, 1000
 	time_limit = 120 # seconds
 	shushes = [
@@ -92,7 +95,6 @@ def quiet_a_redditor(subreddit_title):
 						except prawcore.exceptions.InvalidToken as err:
 							reddit 		= praw.Reddit('bot1')
 							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
-
 					else:
 						print("Found " + comment_id + " to shush, but I've already shushed their tree!")
 			else:
@@ -106,6 +108,7 @@ def distinct_tree(attempt_root_id):
 	return (attempt_root_id not in comments_replied_to_roots)
 
 def get_root_comment(comment_id):
+	global reddit
 	comment = reddit.comment(comment_id)
 	ancestor = comment
 	refresh_counter = 0
