@@ -24,6 +24,17 @@ def traverse_subreddits():
 	print(str(time.ctime()) + " running...")
 	reply_count, reply_limit = 0, 5
 	subreddits = [
+		'anticonsumption',
+		'bettereveryloop',
+		'oddlysatisfying',
+		'beamazed',
+		'television',
+		'nonononoyes',
+		'macroporn',
+		'meditation',
+		'getmotivated',
+		'natureisfuckinglit',
+		'urbanexploration',
 		'showerthoughts', 
 		'askreddit', 
 		'murderedbywords', 
@@ -35,7 +46,7 @@ def traverse_subreddits():
 		'space', 
 		'theydidthefuckyou',
 		'unexpected',
-		'todayilearned',] # banned from r/hmmm lol
+		'todayilearned'] # banned from r/hmmm lol
 	while(len(subreddits) > 0 and reply_count <= reply_limit):
 		random_index = randint(0, len(subreddits)-1)
 		subreddit_title = subreddits[random_index]
