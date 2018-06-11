@@ -139,9 +139,12 @@ def merits_a_shush(text): # Logic of Librarian
 	# return (len(text) > 10 and text.count('s') > 4) # dummy test
 
 def schedule_librarian(job):
+	schedule.every().day.at("02:30").do(job)
 	schedule.every().day.at("09:30").do(job)
+	schedule.every().day.at("13:30").do(job)
 	schedule.every().day.at("17:30").do(job)
-	schedule.every().day.at("23:30").do(job)
+	schedule.every().day.at("20:30").do(job)
+	schedule.every().day.at("23:30").do(job)	
 
 if __name__ == "__main__":
 	initiate_librarian()
