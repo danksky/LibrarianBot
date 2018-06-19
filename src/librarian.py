@@ -2,6 +2,8 @@ import praw
 import schedule
 import time
 from random import randint
+import smtplib
+from email.mime.text import MIMEText
 
 import librarian_logger
 
@@ -106,6 +108,16 @@ def quiet_a_redditor(subreddit_title):
 						except prawcore.exceptions.InvalidToken as err:
 							reddit 		= praw.Reddit('bot1')
 							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
+							
+							# Notify me!
+							msg = MIMEText("(Attempted " + comment_id + ") " + str(err))
+							msg['Subject'] = 'Error attempting to reply to comment: ' + comment_id
+							msg['From'] = 'librarian@loc.gov'
+							msg['To'] =   'librarianbot.reddit@gmail.com'
+							s = smtplib.SMTP('localhost')
+							s.send_message(msg)
+							s.quit()
+
 					else:
 						print("Found " + comment_id + " to shush, but I've already shushed their tree!")
 			else:
