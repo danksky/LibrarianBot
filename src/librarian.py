@@ -106,7 +106,7 @@ def quiet_a_redditor(subreddit_title):
 						except prawcore.exceptions.Forbidden as err:
 							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
 						except prawcore.exceptions.InvalidToken as err:
-							reddit 		= praw.Reddit('bot1')
+							# reddit 		= praw.Reddit('bot1')
 							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
 							
 							# Notify me!
