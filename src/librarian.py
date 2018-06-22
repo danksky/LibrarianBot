@@ -108,16 +108,10 @@ def quiet_a_redditor(subreddit_title):
 						except prawcore.exceptions.InvalidToken as err:
 							# reddit 		= praw.Reddit('bot1')
 							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
-							
-							# Notify me!
-							msg = MIMEText("(Attempted " + comment_id + ") " + str(err))
-							msg['Subject'] = 'Error attempting to reply to comment: ' + comment_id
-							msg['From'] = 'librarian@loc.gov'
-							msg['To'] =   'librarianbot.reddit@gmail.com'
-							s = smtplib.SMTP('localhost')
-							s.send_message(msg)
-							s.quit()
-
+							notify()
+						except prawcore.exceptions.ResponseException as err:
+							librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
+							notify()
 					else:
 						print("Found " + comment_id + " to shush, but I've already shushed their tree!")
 			else:
@@ -126,6 +120,16 @@ def quiet_a_redditor(subreddit_title):
 		else:
 			print(comment_id + ": '" + comment.body[:10] + "' has already been shushed!")
 	return False
+
+def notify():
+	# Notify me!
+	msg = MIMEText("(Attempted " + comment_id + ") " + str(err))
+	msg['Subject'] = 'Error attempting to reply to comment: ' + comment_id
+	msg['From'] = 'librarian@loc.gov'
+	msg['To'] =   'librarianbot.reddit@gmail.com'
+	s = smtplib.SMTP('localhost')
+	s.send_message(msg)
+	s.quit()
 
 def distinct_tree(attempt_root_id):
 	return (attempt_root_id not in comments_replied_to_roots)
