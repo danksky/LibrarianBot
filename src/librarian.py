@@ -129,8 +129,8 @@ def quiet_a_redditor(subreddit_title):
 
 def notify():
 	# Notify me!
-	msg = MIMEText("STRING TEXT")
-	msg['Subject'] = '(TEST) Error attempting to reply to comment: 01234567'
+	msg = MIMEText("(Attempted " + comment_id + ") " + str(err))
+	msg['Subject'] = 'Error attempting to reply to comment: ' + comment_id
 	msg['From'] = 'librarian@loc.gov'
 	msg['To'] =   'librarianbot.reddit@gmail.com'
 	server = smtplib.SMTP('smtp.gmail.com',587)
