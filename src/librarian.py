@@ -5,12 +5,15 @@ from random import randint
 import smtplib
 from email.mime.text import MIMEText
 
+import password_manager
 import librarian_logger
 
 comments_replied_to 		= []
 comments_replied_to_roots	= []
 submission_commented_in		= []
 reddit = None 
+
+EMAIL_ALERT_PASSWORD = password_manager.librarian_gmail_pass
 
 def initiate_librarian():
 	print(str(time.ctime()) + " Initiating librarian...")
@@ -126,13 +129,17 @@ def quiet_a_redditor(subreddit_title):
 
 def notify():
 	# Notify me!
-	msg = MIMEText("(Attempted " + comment_id + ") " + str(err))
-	msg['Subject'] = 'Error attempting to reply to comment: ' + comment_id
+	msg = MIMEText("STRING TEXT")
+	msg['Subject'] = '(TEST) Error attempting to reply to comment: 01234567'
 	msg['From'] = 'librarian@loc.gov'
 	msg['To'] =   'librarianbot.reddit@gmail.com'
-	s = smtplib.SMTP('localhost')
-	s.send_message(msg)
-	s.quit()
+	server = smtplib.SMTP('smtp.gmail.com',587)
+	server.ehlo()
+	server.starttls()
+	server.ehlo()
+	server.login('librarianbot.reddit@gmail.com', EMAIL_ALERT_PASSWORD)
+	server.send_message(msg)
+	server.quit()
 
 def distinct_tree(attempt_root_id):
 	return (attempt_root_id not in comments_replied_to_roots)
