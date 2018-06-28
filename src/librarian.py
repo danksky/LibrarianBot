@@ -140,6 +140,7 @@ def notify():
 	server.login('librarianbot.reddit@gmail.com', EMAIL_ALERT_PASSWORD)
 	server.send_message(msg)
 	server.quit()
+	print("Notification success.")
 
 def distinct_tree(attempt_root_id):
 	return (attempt_root_id not in comments_replied_to_roots)
