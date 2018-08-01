@@ -31,7 +31,7 @@ def traverse_subreddits():
 	subreddits = [
 		'anticonsumption',
 		'bettereveryloop',
-		'oddlysatisfying',
+		# 'oddlysatisfying',
 		'beamazed',
 		'television',
 		'nonononoyes',
