@@ -33,7 +33,7 @@ def traverse_subreddits():
 		'bettereveryloop',
 		# 'oddlysatisfying',
 		'beamazed',
-		'television',
+		# 'television',
 		'nonononoyes',
 		'macroporn',
 		'meditation',
