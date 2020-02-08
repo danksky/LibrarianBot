@@ -1,6 +1,10 @@
 import praw
+from praw.models import MoreComments
 import time
 from random import randint
+import traceback
+import json
+import requests
 
 import password_manager
 
@@ -9,6 +13,7 @@ reddit = None
 REDDIT_USER_PASA_PALABRA = password_manager.librarian_reddit_pass
 CLIENT_ID = password_manager.librarian_reddit_client_id
 CLIENT_SECRET = password_manager.librarian_reddit_client_secret
+WEBHOOK_URL = password_manager.librarian_slack_webhook_url
 
 shushes = [
     "Please be quiet.",
@@ -16,176 +21,13 @@ shushes = [
     "Please keep it down.",
     "Could you keep it down please?",
     "Please lower your voice."]
-subreddits = [
-    'anticonsumption',
-    'bettereveryloop',
-    # 'oddlysatisfying',
-    'beamazed',
-    # 'television',
-    'nonononoyes',
+banned_subreddits = [
+    'hmmm',
+    'oddlysatisfying',
+    'television',
     'macroporn',
-    'meditation',
-    'getmotivated',
-    'natureisfuckinglit',
-    'sports',
-    'TIHI',
-    'facepalm',
-    'whatcouldgowrong',
-    'rareinsults',
-    'idiotsincars',
-    'urbanexploration',
-    'showerthoughts',
-    'askreddit',
-    # 'murderedbywords',
-    'mildlyinteresting',
-    'wholesomememes',
-    # 'eyebleach',
-    'trees',
-    'madlads',
-    'space',
-    'theydidthefuckyou',
-    "Freebies",
-    "buildapcsales",
-    "buyitforlife",
-    "frugalmalefashion",
-    "gamedeals",
-    "AppHookup",
-    "beermoney",
-    "frugal",
-    "AbandonedPorn",
-    "Pareidolia",
-    "perfecttiming",
-    "minimalism",
-    "animalsbeingjerks",
-    "BirdsWithArms",
-    "trollinganimals",
-    "CatPranks",
-    "gentlemanimals",
-    "ReactionGIFS",
-    "HighlightGIFS",
-    "GamePhysics",
-    "Unexpected",
-    "awwwtf",
-    "gifsound",
-    "BlackpeopleGifs",
-    "newreddits",
-    "findareddit",
-    "tipofmytongue",
-    "theoryofreddit",
-    "metahub",
-    "ideasfortheadmins",
-    "TrueReddit",
-    "redditdotcom",
-    "MuseumOfReddit",
-    "OutOfTheLoop",
-    "GetMotivated",
-    "GetDisciplined",
-    "UpliftingNews",
-    "ProgressPics",
-    "MMFB",
-    "MadeMeSmile",
-    "FoodPorn",
-    "BudgetFood",
-    "Jokes",
-    "LatvianJokes",
-    "standupshots",
-    "Screenshots",
-    "calvinandhobbes",
-    "HumorousReviews",
-    "YoutubeComments",
-    "Foodforthought",
-    "TrueAskReddit",
-    "NoStupidQuestions",
-    "ChangemyView",
-    "offmychest",
-    "TalesFromRetail",
-    "AskScience",
-    "AskHistorians",
-    "explainlikeIAmA",
-    "RandomKindness",
-    "youtubehaiku",
-    "ArtisanVideos",
-    "netflixbestof",
-    "MovieaWeek",
-    "MovieSuggestions",
-    "trailers",
-    "TrueFilm",
-    "FanTheories",
-    "CordCutters",
-    "Cinemagraphs",
-    "firstworldproblems",
-    "ancientworldproblems",
-    "classicrage",
-    "Gaming4Gamers",
-    "CreepyGaming",
-    "gamemusic",
-    "playdate",
-    "battlestations",
-    "shittybattlestations",
-    "photoshopbattles",
-    "mspaintbattles",
-    "ICanDrawThat",
-    "redditgetsdrawn",
-    "alternativeart",
-    "DoodleOrDie",
-    "itookapicture",
-    "listentothis",
-    "albumaday",
-    "futurebeats",
-    "mashups",
-    "MISC",
-    "gonewilder",
-    "avocadosgonewild",
-    "ToasterRights",
-    "picsofdeadtoasters",
-    "beardporn",
-    "shaveoftheday",
-    "nyxnyxnyx",
-    "FifthWorldPics",
-    "whowouldwin",
-    "bitchimabus",
-    "FuckYouImAShark",
-    "GreenDawn",
-    "asmr",
-    "FiftyFifty",
-    "CrazyIdeas",
-    "MildlyInteresting",
-    "MildlyInfuriating",
-    "thingsforants",
-    "NotTheOnion",
-    "ifyoulikeblank",
-    "dataisbeautiful",
-    "estimation",
-    "fatpeoplestories",
-    "Showerthoughts",
-    "nostalgia",
-    "MorbidReality",
-    "pettyrevenge",
-    "prorevenge",
-    "LucidDreaming",
-    "24hoursupport",
-    "internetisbeautiful",
-    "outside",
-    "futurology",
-    "puzzles",
-    "nononono",
-    "nosleep",
-    "FearMe",
-    "whatisthisthing",
-    "whatsthisworth",
-    "lifeprotips",
-    "lifehacks",
-    "zenhabits",
-    "howtonotgiveafuck",
-    "EDC",
-    "DIY",
-    "somethingimade",
-    "learnprogramming",
-    "LearnPython",
-    'unexpected',
-    # 'hmmm',
-    'todayilearned']
-
+    'murderedbywords',
+    'eyebleach']
 
 comment_ids_replied_to = set()
 comment_ids_replied_to_roots = set()
@@ -203,21 +45,33 @@ def initiate_librarian():
         password=REDDIT_USER_PASA_PALABRA)
 
 
-def initialize_trackers():
-    # TODO: Make call to AWS to get a list of all the comments and initialize these accordingly
-    print("filler")
-
-
 def traverse_subreddits():
     print(str(time.ctime()) + " running...")
     reply_count, reply_limit = 0, 5
-    while(len(subreddits) > 0 and reply_count <= reply_limit):
-        random_index = randint(0, len(subreddits)-1)
-        subreddit_title = subreddits[random_index]
-        print("Now trying to quiet a redditor in: " + subreddit_title)
-        if quiet_a_redditor(subreddit_title):
+    request_count = 25
+    while(request_count > 0 and reply_count <= reply_limit):
+        print("Requesting feed from r/all with " +
+              str(request_count) + " remaining")
+        request_count -= 1
+        if quiet_a_redditor('all'):
             reply_count += 1
-        subreddits.remove(subreddit_title)
+    return reply_count
+
+
+def alert_slack(notify=False, message=""):
+    notifyChannelString = ""
+    if (notify):
+        notifyChannelString = "<!channel> "
+    slack_data = {'text': notifyChannelString + str(message)}
+    response = requests.post(
+        WEBHOOK_URL, data=json.dumps(slack_data),
+        headers={'Content-Type': 'application/json'}
+    )
+    if response.status_code != 200:
+        raise ValueError(
+            'Request to slack returned an error %s, the response is:\n%s'
+            % (response.status_code, response.text)
+        )
 
 
 def quiet_a_redditor(subreddit_title, timeout=120):
@@ -230,7 +84,8 @@ def quiet_a_redditor(subreddit_title, timeout=120):
     time_start = time.time()
     # Fetch the latest comments from the subreddit
     for comment in subreddit.stream.comments():
-        print(comment.id)
+        if isinstance(comment, MoreComments):
+            continue
         if (time.time() - time_start > timeout):
             print("Timeout @ " + str(time.ctime()))
             break
@@ -248,18 +103,12 @@ def quiet_a_redditor(subreddit_title, timeout=120):
                 if merits_a_shush(comment.body):
                     root_id = get_root_comment_id(comment_id)
                     if distinct_tree(root_id):
-                        err = attempt_a_shush(comment)
-                        if err is None:
-                            # Local/Runtime record
-                            comment_ids_replied_to.add(comment_id)
-                            comment_ids_replied_to_roots.add(root_id)
-                            submission_commented_in.add(comment.submission)
-                            # Permanent record
-                            # TODO
-                            return True
-                        else:
-                            # TODO
-                            print("TODO clearly something terrible has happened")
+                        comment.reply(
+                            shushes[randint(0, len(shushes)-1)] + " This is a public forum.")
+                        comment_ids_replied_to.add(comment_id)
+                        comment_ids_replied_to_roots.add(root_id)
+                        submission_commented_in.add(comment.submission)
+                        return True
                     else:
                         print("Found " + comment_id +
                               " to shush, but I've already shushed their tree!")
@@ -295,45 +144,23 @@ def populate_roots(comments_replied_to):
         comment_ids_replied_to_roots.add(get_root_comment_id(comment_id))
 
 
-def attempt_a_shush(comment) -> Exception:
-    try:
-        # Magic
-        comment.reply(
-            shushes[randint(0, len(shushes)-1)] + " This is a public forum.")
-        # Local/Runtime record
-        # comment_ids_replied_to.append(comment_id)
-        # comment_ids_replied_to_roots.append(root_id)
-        # submission_commented_in.append(comment.submission)
-        # Permanent record
-        # librarian_logger.log_comment(comment.link_permalink, comment_id)
-        # librarian_logger.log_submission(comment.submission)
-    except praw.exceptions.WebSocketException as err:
-        # librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
-        # notify()
-        return err
-    except praw.exceptions.ClientException as err:
-        # librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
-        return err
-    except praw.exceptions.APIException as err:
-        # librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
-        return err
-    except praw.exceptions.PRAWException as err:
-        # reddit 		= praw.Reddit('bot1')
-        # librarian_logger.log_error("(Attempted " + comment_id + ") " + str(err))
-        # notify()
-        return err
-    except Exception as err:
-        # catch all errors
-        return err
-    finally:
-        return None
-
-
 def merits_a_shush(text):  # Logic of Librarian
-    return (text.isupper()) and (len(text) > 6)
-    # return (len(text) > 10 and text.count('s') > 4) # dummy test
+    return (text.isupper() or "!!!" in text) and (len(text) > 6)
 
 
 if __name__ == "__main__":
-    initiate_librarian()
-    traverse_subreddits()
+    try:
+        initiate_librarian()
+        reply_count = traverse_subreddits()
+        alert_slack(notify=False,
+                    message="Successful run with " + str(reply_count) + " replies.")
+    except praw.exceptions.WebSocketException as err:
+        alert_slack(notify=True, message=traceback.format_exc())
+    except praw.exceptions.ClientException as err:
+        alert_slack(notify=True, message=traceback.format_exc())
+    except praw.exceptions.APIException as err:
+        alert_slack(notify=True, message=traceback.format_exc())
+    except praw.exceptions.PRAWException as err:
+        alert_slack(notify=True, message=traceback.format_exc())
+    except Exception as err:
+        alert_slack(notify=True, message=traceback.format_exc())
